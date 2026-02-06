@@ -404,14 +404,132 @@ tests/e2e/
 
 ---
 
-## Section VIII: References
+## Section VIII: Git Workflow & PR Process (CRITICAL)
+
+### 8.1 Repository Setup
+**NEVER push directly to the upstream Azure repository!**
+
+```bash
+# 1. Fork the repository first via GitHub UI
+# 2. Clone your fork locally
+git clone https://github.com/<your-username>/bicep-registry-modules.git
+
+# 3. Add upstream as a remote (for syncing)
+git remote add upstream https://github.com/Azure/bicep-registry-modules.git
+
+# 4. Verify remotes
+git remote -v
+# Should show:
+# origin    https://github.com/<your-username>/bicep-registry-modules.git (fetch/push)
+# upstream  https://github.com/Azure/bicep-registry-modules.git (fetch)
+```
+
+**CRITICAL RULES:**
+- `origin` = YOUR FORK (push here)
+- `upstream` = Azure/bicep-registry-modules (NEVER push here directly)
+- All contributions MUST go through Pull Requests
+
+### 8.2 PR Description Template
+When creating a PR, use this structure:
+
+```markdown
+## Description
+<!-- Summary of the change and which issue is fixed -->
+Closes #<issue-number>
+
+## Pipeline Reference
+<!-- Insert your Pipeline Status Badge from YOUR FORK -->
+| Pipeline |
+| -------- |
+|[![avm.ptn.example.module](https://github.com/<your-username>/bicep-registry-modules/actions/workflows/avm.ptn.example.module.yml/badge.svg?branch=<your-branch>)](https://github.com/<your-username>/bicep-registry-modules/actions/workflows/avm.ptn.example.module.yml)|
+
+## Type of Change
+- Azure Verified Module updates:
+  - [ ] Bugfix containing backwards-compatible bug fixes, and I have NOT bumped the MAJOR or MINOR version in `version.json`:
+  - [ ] Feature update backwards compatible feature updates, and I have bumped the MINOR version in `version.json`.
+  - [ ] Breaking changes and I have bumped the MAJOR version in `version.json`.
+  - [ ] Update to documentation
+- [ ] Update to CI Environment or utilities (Non-module affecting changes)
+
+## Checklist
+- [ ] I'm sure there are no other open Pull Requests for the same update/change
+- [ ] I have run `Set-AVMModule` locally to generate the supporting module files.
+- [ ] My corresponding pipelines / checks run clean and green without any errors or warnings
+- [ ] I have updated the module's CHANGELOG.md file with an entry for the next version
+```
+
+### 8.3 Running CI in Your Fork
+Before creating a PR, validate your changes pass CI in your fork:
+
+```bash
+# 1. Push your branch to your fork
+git push origin feature/my-change
+
+# 2. Trigger the workflow via GitHub CLI
+gh workflow run avm.ptn.example.module.yml \
+  --repo <your-username>/bicep-registry-modules \
+  --ref feature/my-change
+
+# 3. Monitor the workflow
+gh run list --repo <your-username>/bicep-registry-modules --branch feature/my-change
+```
+
+### 8.4 Pre-Submission Requirements
+Before the PR is accepted, ensure:
+
+1. **Files Regenerated:**
+   ```powershell
+   # Run from repository root
+   Set-AVMModule -ModuleFolderPath "avm/ptn/example/module"
+   ```
+
+2. **CHANGELOG Updated:**
+   - Version matches `version.json`
+   - Changes documented under appropriate headers
+
+3. **Workflow Passes:**
+   - Static validation ✅
+   - Deployment validation ✅ (in your fork)
+   - PSRule validation ✅
+
+4. **Clean Commit History:**
+   - Consider squashing commits if messy
+   - Clear commit messages
+
+### 8.5 Module Owner Setup (New Modules)
+For new modules, you need:
+
+1. **Azure Identity for CI:**
+   ```bash
+   # Create managed identity for CI
+   az identity create --name id-avm-ci-<module-name> --resource-group rg-avm-ci
+   ```
+
+2. **OIDC Federated Credential:**
+   ```json
+   {
+     "name": "federatedIdentity",
+     "issuer": "https://token.actions.githubusercontent.com",
+     "subject": "repo:<your-username>/bicep-registry-modules:ref:refs/heads/<branch>",
+     "audiences": ["api://AzureADTokenExchange"]
+   }
+   ```
+
+3. **Permissions:**
+   - Managed identity needs Contributor on test subscription
+   - Identity needs to be registered in `AZURE_CREDENTIALS` secret mapping
+
+---
+
+## Section IX: References
 
 - [AVM Specifications](https://azure.github.io/Azure-Verified-Modules/specs/)
 - [Bicep Specifications (BCPNFR)](https://azure.github.io/Azure-Verified-Modules/specs/bcp/)
 - [Terraform Specifications (TFNFR)](https://azure.github.io/Azure-Verified-Modules/specs/tf/)
 - [Shared Specifications (SNFR)](https://azure.github.io/Azure-Verified-Modules/specs/shared/)
 - [Pattern Module Specifications (PTNFR)](https://azure.github.io/Azure-Verified-Modules/specs/ptn/)
+- [Contribution Guide](https://aka.ms/avm/contribute/bicep)
 
 ---
 
-*This constitution is version 0.1.0. Last updated: 2026-02-06.*
+*This constitution is version 0.2.0. Last updated: 2025-02-06.*
