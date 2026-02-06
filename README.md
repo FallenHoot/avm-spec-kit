@@ -57,10 +57,13 @@ We welcome feedback from other AVM maintainers!
 
 4. **Start your AI assistant** and use the commands:
    ```
-   /avm.module    - Define a new AVM module specification
-   /avm.design    - Create architecture decisions and interfaces  
-   /avm.test      - Generate E2E test scenarios
-   /avm.implement - Build the module following AVM patterns
+   /avm.module      - Define a new AVM module specification
+   /avm.design      - Create architecture decisions and interfaces  
+   /avm.test        - Generate E2E test scenarios
+   /avm.implement   - Build the module following AVM patterns
+   /avm.contribute  - Prepare for contributing (check issues, owners, guidelines)
+   /avm.scan        - Scan repos for issues/PRs affecting your module
+   /avm.dependencies - Check module dependencies for updates
    ```
 
 ## How It Works
@@ -86,6 +89,43 @@ We welcome feedback from other AVM maintainers!
 ```
 
 **Key principle**: Your learning process stays private. Your polished output goes public.
+
+## Commands
+
+### Development Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/avm.module` | Define a new AVM module specification |
+| `/avm.design` | Create architecture decisions and interfaces |
+| `/avm.test` | Generate E2E test scenarios |
+| `/avm.implement` | Build the module following AVM patterns |
+
+### Contribution Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/avm.contribute` | Prepare for contributing - reviews issues, identifies owners, checks guidelines |
+| `/avm.scan` | Scan AVM repos for issues/PRs affecting your module |
+| `/avm.dependencies` | Check module dependencies for updates and breaking changes |
+
+### Example: Using `/avm.contribute`
+
+```
+/avm.contribute
+
+Issue I'm addressing: https://github.com/Azure/bicep-registry-modules/issues/1234
+
+My proposed changes:
+Add support for customer-managed keys to the storage module
+
+Please help me:
+1. Review the issue comments and any linked PRs to check if someone else is already working on this
+2. Identify the module/code owners I should coordinate with
+3. Find any contribution guidelines, specs, or interface standards I need to follow
+4. Flag potential scope creep - what's the minimum change needed?
+5. Review my PR before I submit (when ready)
+```
 
 ## What's in the Constitution?
 
