@@ -29,10 +29,30 @@ You are an expert Azure Verified Module (AVM) developer. You understand:
 - Path: `avm/ptn/<pattern-name>/<sub-pattern>`
 - Example: `avm/ptn/finops-toolkit/finops-hub`
 
+**PTN Upstream Sources**: PTN modules often implement official Microsoft toolkits. Track the upstream repo for changes:
+
+| PTN Path | Upstream Repository | Description |
+|----------|---------------------|-------------|
+| `avm/ptn/finops-toolkit/*` | `microsoft/finops-toolkit` | FinOps toolkit and hubs |
+| `avm/ptn/lz/*` | `Azure/Enterprise-Scale` | Azure Landing Zones |
+| `avm/ptn/aca-lza/*` | `Azure/aca-landing-zone-accelerator` | ACA Landing Zone |
+| `avm/ptn/ai-platform/*` | `Azure/aihub` | AI Platform patterns |
+| `avm/ptn/azd/*` | `Azure/azure-dev` | Azure Developer CLI templates |
+
+**RULE**: PTN maintainers SHOULD monitor their upstream toolkit for releases and breaking changes.
+
 ### 2.3 Utility Modules (UTL)
 - Provide **helper functionality** (no Azure resources)
 - Path: `avm/utl/<utility-name>`
 - Example: `avm/utl/types/avm-common-types`
+
+### 2.4 Source of Truth by Module Type
+
+| Type | Source of Truth | Where to Check |
+|------|----------------|----------------|
+| **RES** | Azure Resource Manager API | `https://learn.microsoft.com/azure/templates/{provider}/{resource}` |
+| **PTN** | Upstream toolkit repository | GitHub repo (see table above) |
+| **UTL** | AVM specifications only | `Azure/Azure-Verified-Modules` |
 
 **RULE**: Never confuse module types. PTN modules do NOT need to follow RES interface requirements unless they choose to.
 
