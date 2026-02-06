@@ -304,5 +304,6 @@ MIT License - see [LICENSE](LICENSE)
 ## Acknowledgments
 
 - [GitHub Spec-Kit team](https://github.com/github/spec-kit) for the foundation
+- [@bvorland](https://github.com/bvorland) for introducing us to Spec-Kit
 - [AVM Core Team](https://azure.github.io/Azure-Verified-Modules/) for the specifications
 - [@johnlokerse](https://github.com/johnlokerse) for Bicep + AI integration patterns
