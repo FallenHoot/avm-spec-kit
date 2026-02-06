@@ -519,6 +519,50 @@ For new modules, you need:
    - Managed identity needs Contributor on test subscription
    - Identity needs to be registered in `AZURE_CREDENTIALS` secret mapping
 
+### 8.6 Local Development Setup (CRITICAL)
+Before making any changes, set up your local environment:
+
+1. **Sparse Checkout** (for working on a single module):
+   ```powershell
+   # Clone with sparse checkout
+   git clone --filter=blob:none --sparse https://github.com/Azure/bicep-registry-modules.git
+   cd bicep-registry-modules
+   
+   # Add your module and utilities
+   git sparse-checkout add "avm/ptn/your-module/path"
+   git sparse-checkout add ".github/workflows/avm.ptn.your-module.path.yml"
+   git sparse-checkout add "utilities/pipelines"
+   ```
+
+2. **Add Your Fork as Remote**:
+   ```powershell
+   git remote add fork https://github.com/<your-username>/bicep-registry-modules.git
+   git remote -v  # Verify: origin=Azure, fork=yours
+   ```
+
+3. **Required Tools**:
+   - **Bicep CLI**: `winget install Microsoft.Bicep`
+   - **PowerShell 7+**: For running AVM scripts
+   - **GitHub CLI**: `winget install GitHub.cli`
+
+4. **Regenerate Files Before Committing**:
+   ```powershell
+   # From repository root
+   cd <repo-root>
+   
+   # Rebuild main.json from main.bicep
+   bicep build avm/ptn/your-module/path/main.bicep
+   
+   # Regenerate README.md
+   . .\utilities\pipelines\sharedScripts\Set-ModuleReadMe.ps1
+   Set-ModuleReadMe -TemplateFilePath "avm/ptn/your-module/path/main.bicep"
+   ```
+
+5. **Test File Limitations**:
+   - Avoid ternary expressions with arrays in test params (e.g., `!empty(x) ? [x] : []`)
+   - Set-ModuleReadMe cannot parse complex expressions
+   - Use simple values or empty arrays instead
+
 ---
 
 ## Section IX: References
