@@ -35,36 +35,118 @@ We welcome feedback from other AVM maintainers!
 ## Quick Start
 
 ### Prerequisites
-- [spec-kit CLI](https://github.com/github/spec-kit) installed
-- An AI coding assistant (GitHub Copilot, Claude, Cursor, etc.)
 
-### Installation
+1. **Python 3.11+** - [Download](https://www.python.org/downloads/)
+2. **Git** - [Download](https://git-scm.com/downloads)
+3. **uv** (Python package manager) - See installation below
+4. **An AI coding assistant** (GitHub Copilot, Claude, Cursor, etc.)
 
-1. **Clone this repo** (or copy the `.specify/` folder):
-   ```bash
-   git clone https://github.com/FallenHoot/avm-spec-kit.git
-   ```
+### Step 1: Install uv
 
-2. **Copy to your AVM module project**:
-   ```bash
-   cp -r avm-spec-kit/.specify/ your-avm-module/
-   ```
+Choose your platform:
 
-3. **Add to .gitignore** (keep your process private):
-   ```bash
-   echo ".specify/" >> your-avm-module/.gitignore
-   ```
+<details>
+<summary><strong>🪟 Windows</strong></summary>
 
-4. **Start your AI assistant** and use the commands:
-   ```
-   /avm.module      - Define a new AVM module specification
-   /avm.design      - Create architecture decisions and interfaces  
-   /avm.test        - Generate E2E test scenarios
-   /avm.implement   - Build the module following AVM patterns
-   /avm.contribute  - Prepare for contributing (check issues, owners, guidelines)
-   /avm.scan        - Scan repos for issues/PRs affecting your module
-   /avm.dependencies - Check module dependencies for updates
-   ```
+**Option A: WinGet (Recommended)**
+```powershell
+winget install --id=astral-sh.uv -e
+```
+
+**Option B: Scoop**
+```powershell
+scoop install main/uv
+```
+
+**Option C: PowerShell installer**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+After installation, restart your terminal or run:
+```powershell
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+</details>
+
+<details>
+<summary><strong>🍎 macOS</strong></summary>
+
+**Option A: Homebrew (Recommended)**
+```bash
+brew install uv
+```
+
+**Option B: Shell installer**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+</details>
+
+<details>
+<summary><strong>🐧 Linux</strong></summary>
+
+**Shell installer**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Or if you don't have curl:
+```bash
+wget -qO- https://astral.sh/uv/install.sh | sh
+```
+
+</details>
+
+Verify installation:
+```bash
+uv --version
+```
+
+### Step 2: Install spec-kit CLI
+
+```bash
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+```
+
+> **Note:** If you see a PATH warning, follow the instructions or run `uv tool update-shell`
+
+Verify installation:
+```bash
+specify check
+```
+
+### Step 3: Add AVM Spec-Kit to Your Project
+
+**Option A: Copy just the constitution (minimal)**
+```bash
+# In your AVM module directory
+mkdir -p .specify/memory
+curl -o .specify/memory/constitution.md https://raw.githubusercontent.com/FallenHoot/avm-spec-kit/main/.specify/memory/constitution.md
+echo ".specify/" >> .gitignore
+```
+
+**Option B: Clone and copy everything**
+```bash
+git clone https://github.com/FallenHoot/avm-spec-kit.git
+cp -r avm-spec-kit/.specify/ your-avm-module/
+echo ".specify/" >> your-avm-module/.gitignore
+```
+
+### Step 4: Use the Commands
+
+Start your AI assistant and use these commands:
+```
+/avm.module      - Define a new AVM module specification
+/avm.design      - Create architecture decisions and interfaces  
+/avm.test        - Generate E2E test scenarios
+/avm.implement   - Build the module following AVM patterns
+/avm.contribute  - Prepare for contributing (check issues, owners, guidelines)
+/avm.scan        - Scan repos for issues/PRs affecting your module
+/avm.dependencies - Check module dependencies for updates
+```
 
 ## How It Works
 
@@ -166,6 +248,47 @@ This is an experiment! We welcome:
 - Bug reports
 
 Please open an issue or PR.
+
+## Troubleshooting
+
+### "uv: command not found" / "uv is not recognized"
+
+Your PATH wasn't updated after installation. Try:
+
+**Windows (PowerShell):**
+```powershell
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+**macOS/Linux:**
+```bash
+source ~/.bashrc  # or ~/.zshrc
+```
+
+Or simply restart your terminal.
+
+### "specify: command not found"
+
+The uv tools directory isn't in your PATH. Run:
+```bash
+uv tool update-shell
+```
+Then restart your terminal.
+
+### Slash commands not appearing in AI assistant
+
+1. Make sure `.specify/templates/commands/` exists in your project
+2. Restart your IDE/editor completely
+3. Check your AI agent supports slash commands (see [supported agents](https://github.com/github/spec-kit#-supported-ai-agents))
+
+### Constitution customizations lost after upgrade
+
+Back up before upgrading:
+```bash
+cp .specify/memory/constitution.md .specify/memory/constitution-backup.md
+specify init --here --force --ai copilot
+mv .specify/memory/constitution-backup.md .specify/memory/constitution.md
+```
 
 ## Related Projects
 
