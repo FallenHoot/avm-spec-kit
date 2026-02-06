@@ -1,0 +1,13 @@
+# Spec-kit working files (if testing locally)
+.specify/specs/
+.specify/memory/session.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,13 @@
+# ============================================
+# AVM Spec-Kit .gitignore Template
+# ============================================
+# Copy this content to your AVM module's .gitignore
+# to keep your spec-kit working files private.
+# ============================================
+
+# Spec-kit working directory (KEEP PRIVATE)
+.specify/
+
+# Alternative: If you want to commit the constitution but not specs
+# .specify/specs/
+# .specify/memory/session.md
