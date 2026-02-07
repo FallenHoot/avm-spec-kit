@@ -264,15 +264,17 @@ on:
       - ".github/workflows/avm.template.module.yml"
       - ".github/workflows/avm.ptn.example.module.yml"
       - "avm/ptn/example/module/**"
-      - "avm/utilities/pipelines/**"
-      - "!avm/utilities/pipelines/platform/**"
+      - "utilities/pipelines/**"
+      - "!utilities/pipelines/platform/**"
+      - "!*/**/child-module-publish-allowed-list.json"
       - "!*/**/README.md"
 ```
 
 **CRITICAL**: 
 - Include `customLocation` input (often forgotten!)
 - Use `actions/checkout@v4` (not v5)
-- Paths must use `avm/utilities/pipelines/**` not `utilities/pipelines/**`
+- Paths use `utilities/pipelines/**` (NOT `avm/utilities/pipelines/**`)
+- **DO NOT add custom path exclusions** - Static validation expects EXACTLY these path filters. Adding custom exclusions (e.g., `!avm/ptn/your-module/docs/**`) will fail CI with "excess push trigger path filters" error.
 
 ### 4.9 PowerShell in Deployment Scripts (CRITICAL)
 
@@ -714,6 +716,7 @@ Quick reference for common CI failures and their fixes:
 | `RoleAssignmentNotFound` / `AuthorizationFailed` | AAD propagation delay | Increase initial wait to 180s, total timeout to 13min |
 | `customLocation has default value` | Workflow parameter has `default:` set | Remove default from workflow, use `enforcedLocation` in tests |
 | `CRLF will be replaced by LF` | Windows line endings | Run `git config core.autocrlf input` |
+| `excess push trigger path filters` | Custom exclusions in workflow | Remove custom path exclusions from workflow - only standard filters allowed |
 | `enableTelemetry not passed` | Role assignment module missing telemetry | Add `enableTelemetry: enableTelemetry` param |
 
 ---
@@ -729,4 +732,4 @@ Quick reference for common CI failures and their fixes:
 
 ---
 
-*This constitution is version 0.3.0. Last updated: 2026-02-07.*
+*This constitution is version 0.7.0. Last updated: 2026-02-07.*
