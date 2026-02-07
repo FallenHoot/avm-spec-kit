@@ -223,7 +223,7 @@ resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableT
 - PTN: `46d3xbcp.ptn.<pattern>-<subpattern>` (e.g., `46d3xbcp.ptn.finopstoolkit-finopshub`)
 - UTL: `46d3xbcp.utl.<utility>` (e.g., `46d3xbcp.utl.types-avmcommontypes`)
 
-**CRITICAL**: 
+**CRITICAL**:
 - Use hyphens, not dots, in the module name portion
 - The `enableTelemetry` default MUST be `true`
 - Description MUST be exactly "Optional. Enable/Disable usage telemetry for module."
@@ -273,6 +273,37 @@ on:
 - Include `customLocation` input (often forgotten!)
 - Use `actions/checkout@v4` (not v5)
 - Paths must use `avm/utilities/pipelines/**` not `utilities/pipelines/**`
+
+### 4.9 PowerShell in Deployment Scripts (CRITICAL)
+
+When writing PowerShell code inside Bicep deployment scripts (heredoc strings), use PowerShell comment syntax:
+
+```bicep
+// ✅ CORRECT - PowerShell uses # for comments
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  properties: {
+    scriptContent: '''
+      # This is a PowerShell comment
+      $result = Get-AzResource
+      
+      # Retry configuration
+      $maxRetries = 30
+    '''
+  }
+}
+
+// ❌ WRONG - JavaScript/C-style comments don't work in PowerShell
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  properties: {
+    scriptContent: '''
+      // This will FAIL - PowerShell doesn't recognize //
+      $result = Get-AzResource
+    '''
+  }
+}
+```
+
+**Error Message**: `The term '//' is not recognized as a name of a cmdlet, function, script file, or executable program.`
 
 ---
 
@@ -363,14 +394,14 @@ Common failures and fixes:
 - [ ] Scope defined (what resources, what scenarios)
 - [ ] Breaking changes assessed (affects version number)
 
-### 6.2 Before Submitting PR
+### 6.4 Before Submitting PR
 - [ ] All required tests pass locally
 - [ ] CHANGELOG.md updated
 - [ ] version.json updated (if applicable)
 - [ ] README.md regenerated
 - [ ] No hardcoded values or secrets
 
-### 6.3 Test Naming Convention
+### 6.5 Test Naming Convention
 ```
 tests/e2e/
 ├── defaults/           # Minimal deployment
@@ -378,6 +409,85 @@ tests/e2e/
 ├── waf-aligned/        # Production security settings
 └── <scenario>/         # Additional scenarios as needed
 ```
+
+### 6.6 Azure Region Selection for CI Tests (CRITICAL)
+
+Some Azure regions have capacity constraints that cause SKU availability failures in CI. When tests deploy compute-intensive resources (ADX, VMs, AKS), use `enforcedLocation` to ensure SKU availability.
+
+#### Capacity-Constrained Regions (AVOID for CI)
+- ❌ `uksouth` - UK South
+- ❌ `northeurope` - North Europe  
+- ❌ `westeurope` - West Europe
+- ❌ `eastus` - East US 
+- ❌ `westus2` - West US 2
+
+#### Recommended CI Regions
+- ✅ `italynorth` - Italy North (recommended for ADX)
+- ✅ `swedencentral` - Sweden Central
+- ✅ `polandcentral` - Poland Central
+
+#### Using enforcedLocation in Tests
+
+**DO NOT** set a default on `customLocation` in the workflow file - AVM validation will fail.
+
+**DO** use `enforcedLocation` variable in test files:
+
+```bicep
+// ✅ CORRECT - Use enforcedLocation variable in test file
+@description('Optional. The location to deploy resources to.')
+param resourceLocation string = deployment().location
+
+// Enforced location - Italy North has broad SKU availability
+var enforcedLocation = 'italynorth'
+
+resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: resourceGroupName
+  location: enforcedLocation  // Use enforcedLocation, not resourceLocation
+}
+
+module testDeployment '../../../main.bicep' = {
+  params: {
+    location: enforcedLocation  // Pass to module
+  }
+}
+```
+
+### 6.7 Key Vault Soft-Delete Naming Conflicts (CRITICAL)
+
+Key Vaults have soft-delete enabled by default with 90-day retention. When CI runs multiple times with deterministic naming, you get `VaultAlreadyExists` errors from soft-deleted vaults.
+
+**Solution**: Add `deploymentSuffix` using `uniqueString(deployment().name)` which includes timestamp:
+
+```bicep
+// ✅ CORRECT - Include deployment-time uniqueness
+@description('Optional. A token to inject into the name of each resource.')
+param namePrefix string = '#_namePrefix_#'
+
+// Unique suffix to avoid Key Vault soft-delete naming conflicts across CI runs
+var deploymentSuffix = take(uniqueString(deployment().name), 4)
+
+module testDeployment '../../../main.bicep' = {
+  params: {
+    hubName: '${namePrefix}${serviceShort}${deploymentSuffix}'
+  }
+}
+```
+
+```bicep
+// ❌ WRONG - Deterministic naming causes soft-delete conflicts
+module testDeployment '../../../main.bicep' = {
+  params: {
+    hubName: '${namePrefix}${serviceShort}'  // Same name every run!
+  }
+}
+```
+
+**Affected Resources** (have soft-delete by default):
+- Key Vault (`Microsoft.KeyVault/vaults`)
+- Cognitive Services (`Microsoft.CognitiveServices/accounts`)
+- Recovery Services Vaults (`Microsoft.RecoveryServices/vaults`)
+- API Management (`Microsoft.ApiManagement/service`)
+- App Configuration (`Microsoft.AppConfiguration/configurationStores`)
 
 ---
 
@@ -389,6 +499,7 @@ tests/e2e/
 - ❌ Secrets in plain text (use @secure() or Key Vault)
 - ❌ Missing descriptions on parameters
 - ❌ Inconsistent naming conventions
+- ❌ Using `//` comments in PowerShell deployment scripts (use `#`)
 
 ### 7.2 Architecture Anti-Patterns
 - ❌ PTN module implementing all RES interfaces (unless needed)
@@ -401,6 +512,8 @@ tests/e2e/
 - ❌ Manual README.md edits
 - ❌ Version bump without CHANGELOG entry
 - ❌ Breaking changes without MAJOR version bump
+- ❌ Forgetting to regenerate main.json after Bicep changes
+- ❌ Forgetting to regenerate README.md after test file changes
 
 ---
 
@@ -428,6 +541,17 @@ git remote -v
 - `origin` = YOUR FORK (push here)
 - `upstream` = Azure/bicep-registry-modules (NEVER push here directly)
 - All contributions MUST go through Pull Requests
+
+**Alternative Remote Naming** (sparse checkout workflow):
+Some developers use a different naming convention when using sparse checkout:
+```bash
+# origin = Azure (DON'T PUSH)
+# fork = Your username (PUSH HERE)
+git remote add fork https://github.com/<your-username>/bicep-registry-modules.git
+git push fork feature/your-branch
+```
+
+Choose ONE convention and stick with it. The key is: **never push to the Azure repo directly**.
 
 ### 8.2 PR Description Template
 When creating a PR, use this structure:
@@ -551,7 +675,7 @@ Before making any changes, set up your local environment:
    cd <repo-root>
    
    # Rebuild main.json from main.bicep
-   bicep build avm/ptn/your-module/path/main.bicep
+   bicep build avm/ptn/your-module/path/main.bicep --outfile avm/ptn/your-module/path/main.json
    
    # Regenerate README.md
    . .\utilities\pipelines\sharedScripts\Set-ModuleReadMe.ps1
@@ -563,9 +687,38 @@ Before making any changes, set up your local environment:
    - Set-ModuleReadMe cannot parse complex expressions
    - Use simple values or empty arrays instead
 
+### 8.7 Pre-Push Checklist
+
+Before pushing ANY changes to AVM modules:
+
+- [ ] `bicep build main.bicep --outfile main.json` - ARM template regenerated
+- [ ] `Set-ModuleReadMe` run if parameters/outputs changed - README updated
+- [ ] No `//` comments in PowerShell deployment scripts (use `#`)
+- [ ] Line endings are LF (not CRLF)
+- [ ] Pushing to correct remote (your fork, not Azure)
+
 ---
 
-## Section IX: References
+## Section IX: CI Quick Reference
+
+Quick reference for common CI failures and their fixes:
+
+| CI Failure | Root Cause | Fix |
+|------------|-----------|-----|
+| `main.json ARM template should be based on main.bicep` | Bicep changed but main.json not regenerated | Run `bicep build main.bicep --outfile main.json` |
+| `The term '//' is not recognized` | JavaScript comment in PowerShell script | Change `//` to `#` in deployment script heredocs |
+| `Set-ModuleReadMe script should not apply any updates` | Test files changed but README not regenerated | Run `Set-ModuleReadMe -TemplateFilePath main.bicep` |
+| `VaultAlreadyExists` | Key Vault in soft-delete state from previous run | Add `deploymentSuffix` to test hubName |
+| `SkuNotAvailable` / `InsufficientQuota` | Region capacity constraints | Use `enforcedLocation = 'italynorth'` |
+| `The subscription is not registered for the feature` | ADX SKU not available in region | Check SKU availability, use different region |
+| `RoleAssignmentNotFound` / `AuthorizationFailed` | AAD propagation delay | Increase initial wait to 180s, total timeout to 13min |
+| `customLocation has default value` | Workflow parameter has `default:` set | Remove default from workflow, use `enforcedLocation` in tests |
+| `CRLF will be replaced by LF` | Windows line endings | Run `git config core.autocrlf input` |
+| `enableTelemetry not passed` | Role assignment module missing telemetry | Add `enableTelemetry: enableTelemetry` param |
+
+---
+
+## Section X: References
 
 - [AVM Specifications](https://azure.github.io/Azure-Verified-Modules/specs/)
 - [Bicep Specifications (BCPNFR)](https://azure.github.io/Azure-Verified-Modules/specs/bcp/)
@@ -576,4 +729,4 @@ Before making any changes, set up your local environment:
 
 ---
 
-*This constitution is version 0.2.0. Last updated: 2025-02-06.*
+*This constitution is version 0.3.0. Last updated: 2026-02-07.*
